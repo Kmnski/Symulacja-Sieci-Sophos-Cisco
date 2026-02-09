@@ -1,0 +1,73 @@
+version 17.15
+hostname IOU1
+!
+! 1. Domeny i STP
+no ip domain lookup
+ip domain name firma.lab
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+! 2. Konto Administratora (Privilege 15)
+username admin privilege 15 secret 9 ******
+!
+! 3. Uplink do Switcha Rdzeniowego (Core)
+interface Ethernet0/0
+ description UPLINK_TRUNK_TO_CORE
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20,30,99
+ switchport mode trunk
+!
+! 4. Porty Dostępowe (Access Ports) - Hardening
+! Wdrożono: Port Security (Sticky MAC), BPDU Guard (ochrona STP), PortFast
+!
+! Przykład dla VLAN 10 (Admin)
+interface Ethernet0/1
+ description ACCESS_ADMIN_VLAN10
+ switchport access vlan 10
+ switchport mode access
+ ! Port Security: Zapamietuje pierwszy adres MAC (Sticky)
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 0050.7966.6801
+ switchport port-security
+ ! STP Protection: PortFast (szybkie podnoszenie) i BPDUGuard (ochrona przed pętlą)
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+! Przykład dla VLAN 20 (Pracownicy)
+interface Ethernet0/2
+ description ACCESS_USER_VLAN20
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security mac-address sticky
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+! Przykład dla VLAN 30 (Inne Działy)
+interface Ethernet2/0
+ description ACCESS_USER_VLAN30
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security mac-address sticky
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+! (Pozostałe interfejsy skonfigurowane analogicznie)
+!
+! 5. Interfejs Zarządzający
+interface Vlan99
+ description MANAGEMENT_SVI
+ ip address 192.168.99.11 255.255.255.0
+!
+! 6. Bezpieczny Dostęp (SSH v2 Only)
+ip ssh version 2
+!
+line con 0
+ logging synchronous
+!
+line vty 0 4
+ login local
+ transport input ssh
+!
+end

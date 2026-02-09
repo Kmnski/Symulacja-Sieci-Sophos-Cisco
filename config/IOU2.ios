@@ -1,0 +1,47 @@
+version 17.15
+hostname SW-CORE
+!
+! 1. Domeny i STP
+no ip domain lookup
+ip domain name firma.lab
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+! 2. Użytkownik Administratora (Poziom 15)
+username admin privilege 15 secret 9 ******
+!
+! 3. Interfejsy Trunk (Uplinki do Access Switchy i Firewalla)
+interface Ethernet0/0
+ description UPLINK_DO_SOPHOS_PORT1
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20,30,99
+ switchport mode trunk
+!
+interface Ethernet0/1
+ description TRUNK_DO_IOU1
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20,30,99
+ switchport mode trunk
+!
+interface Ethernet0/2
+ description TRUNK_DO_IOU2
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20,30,99
+ switchport mode trunk
+!
+! 4. Interfejs Zarządzający (SVI)
+interface Vlan99
+ description MANAGEMENT_VLAN
+ ip address 192.168.99.10 255.255.255.0
+!
+! 5. Konfiguracja SSH (Wyłączenie Telnetu)
+ip ssh version 2
+!
+line con 0
+ logging synchronous
+!
+line vty 0 4
+ login local
+ transport input ssh
+!
+end
